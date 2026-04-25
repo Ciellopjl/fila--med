@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PatientPriority {
+  NORMAL
+  PRIORITY
+}
+
+enum PatientStatus {
+  WAITING
+  CALLED
+  DONE
+}
+
+model Patient {
+  id        String          @id @default(uuid())
+  name      String
+  symptoms  String?
+  priority  PatientPriority @default(NORMAL)
+  specialty String?
+  status    PatientStatus   @default(WAITING)
+  createdAt DateTime        @default(now())
+  calls     Call[]
+
+  @@map("patients")
+}
+
+model Call {
+  id        String          @id @default(uuid())
+  patientId String          @map("patient_id")
+  patient   Patient         @relation(fields: [patientId], references: [id])
+  userId    String?         @map("user_id")
+  user      AuthorizedUser? @relation(fields: [userId], references: [id])
+  room      String
+  calledAt  DateTime        @default(now())
+
+  @@map("calls")
+}
+
+enum UserRole {
+  ADMIN
+  RECEPTION
+  DOCTOR
+}
+
+model AuthorizedUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  role      UserRole @default(RECEPTION)
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+  calls     Call[]
+  logs      AuditLog[]
+
+  @@map("authorized_users")
+}
+
+model AuditLog {
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
+  user      AuthorizedUser @relation(fields: [userId], references: [id])
+  action    String         // LOGIN, LOGOUT, PATIENT_CALLED, PATIENT_DONE, PATIENT_CREATED
+  details   String?
+  createdAt DateTime       @default(now())
+
+  @@map("audit_logs")
+}
+model SystemSettings {
+  id        String   @id @default("default")
+  rooms     String[] @default(["Consultório 01", "Consultório 02", "Triagem"])
+  specialties String[] @default(["Clínica Geral", "Pediatria", "Ortopedia", "Ginecologia"])
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("system_settings")
+}
