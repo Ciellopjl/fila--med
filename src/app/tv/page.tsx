@@ -180,13 +180,15 @@ export default function TVPage() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     fetchHistory();
 
+    if (!pusherClient) return;
+
     const channel = pusherClient.subscribe('filamed-channel');
     channel.bind('patient_called', handleCall);
 
     return () => {
       clearInterval(timer);
       channel.unbind('patient_called', handleCall);
-      pusherClient.unsubscribe('filamed-channel');
+      pusherClient?.unsubscribe('filamed-channel');
     };
   }, [handleCall, fetchHistory]);
 

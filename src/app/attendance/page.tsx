@@ -65,12 +65,14 @@ export default function AttendancePage() {
     fetchPatients();
     fetchSettings();
     
+    if (!pusherClient) return;
+    
     const channel = pusherClient.subscribe('filamed-channel');
     channel.bind('queue_updated', fetchPatients);
     
     return () => { 
       channel.unbind('queue_updated', fetchPatients);
-      pusherClient.unsubscribe('filamed-channel');
+      pusherClient?.unsubscribe('filamed-channel');
     };
   }, [fetchPatients, fetchSettings]);
 

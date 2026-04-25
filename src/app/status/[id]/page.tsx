@@ -38,6 +38,8 @@ export default function PatientStatusPage({ params }: { params: Promise<{ id: st
   useEffect(() => {
     fetchStatus();
 
+    if (!pusherClient) return;
+
     const channel = pusherClient.subscribe('filamed-channel');
     channel.bind('queue_updated', fetchStatus);
     channel.bind('patient_called', () => {
@@ -47,7 +49,7 @@ export default function PatientStatusPage({ params }: { params: Promise<{ id: st
     return () => {
       channel.unbind('queue_updated', fetchStatus);
       channel.unbind('patient_called');
-      pusherClient.unsubscribe('filamed-channel');
+      pusherClient?.unsubscribe('filamed-channel');
     };
   }, [fetchStatus]);
 

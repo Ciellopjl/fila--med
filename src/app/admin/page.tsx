@@ -39,7 +39,7 @@ import { useRouter } from 'next/navigation';
 import { FlowChart, PriorityPie } from '@/components/admin/AdminCharts';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface Patient {
@@ -143,6 +143,8 @@ export default function AdminPage() {
     fetchData();
 
     // Pusher real-time updates
+    if (!pusherClient) return;
+
     const channel = pusherClient.subscribe('filamed-channel');
     channel.bind('queue_updated', fetchData);
     channel.bind('patient_called', fetchData);
@@ -150,7 +152,7 @@ export default function AdminPage() {
     return () => {
       channel.unbind('queue_updated', fetchData);
       channel.unbind('patient_called', fetchData);
-      pusherClient.unsubscribe('filamed-channel');
+      pusherClient?.unsubscribe('filamed-channel');
     };
   }, [fetchData, status, session, router]);
 
@@ -273,6 +275,8 @@ export default function AdminPage() {
   }, [activeTab, fetchAuditLogs, fetchStaffReports, fetchSettings]);
 
   useEffect(() => {
+    if (!pusherClient) return;
+
     const channel = pusherClient.subscribe('filamed-channel');
     channel.bind('user_status_changed', (data: { email: string, isOnline: boolean }) => {
       setAuthUsers(prev => prev.map(u => u.email === data.email ? { ...u, isOnline: data.isOnline } : u));
